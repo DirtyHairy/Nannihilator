@@ -1,0 +1,198 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! This file is part of Nannihilator.
+!
+! Copyright (C) 2012- by 
+!     Christian Speckner <cnspeckn@googlemail.com>
+!
+! Nannihilator is free software; you can redistribute it and/or modify it
+! under the terms of the GNU General Public License as published by 
+! the Free Software Foundation; either version 3, or (at your option)
+! any later version.
+!
+! Nannihilator is distributed in the hope that it will be useful, but
+! WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License
+! along with this program; if not, write to the Free Software
+! Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+module nannihilator
+use iso_c_binding
+implicit none
+private
+
+integer, parameter, public :: FPE_DIVISION_BY_ZERO = @FPE_DIVISION_BY_ZERO@
+integer, parameter, public :: FPE_INEXACT = @FPE_INEXACT@
+integer, parameter, public :: FPE_INVALID = @FPE_INVALID@
+integer, parameter, public :: FPE_UNDERFLOW = @FPE_UNDERFLOW@
+integer, parameter, public :: FPE_OVERFLOW = @FPE_OVERFLOW@
+integer, parameter, public :: FPE_ALL = @FPE_ALL@
+integer, parameter, public :: FPE_NONE = 0
+
+public :: fpe_clear_exceptions
+public :: fpe_raise_exceptions
+public :: fpe_get_exceptions
+public :: fpe_check_exceptions
+public :: fpe_traps_supported
+public :: fpe_enable_traps
+public :: fpe_disable_traps
+public :: fpe_get_trap_mask
+public :: fpe_handler_supported
+public :: fpe_handler_install
+public :: fpe_handler_uninstall
+public :: fpe_handler_arm
+
+interface
+
+   function feclearexcept (exc) result (res) bind(c)
+   import
+   integer(c_int), value :: exc
+   integer(c_int) :: res
+   end function feclearexcept
+
+   function fetestexcept (exc) result (res) bind(c)
+   import
+   integer(c_int), value :: exc
+   integer(c_int) :: res
+   end function fetestexcept
+
+   function feraiseexcept (exc) result (res) bind(c)
+   import
+   integer(c_int), value :: exc
+   integer(c_int) :: res
+   end function feraiseexcept
+
+   function traps_supported () result (res) bind(c, name="fpe_supports_traps")
+   import
+   integer(c_int) :: res
+   end function traps_supported
+
+   function fpe_enableexcept (exc) result (res) bind(c, &
+      name="fpe_enable_traps")
+   import
+   integer(c_int), value :: exc
+   integer(c_int) :: res
+   end function fpe_enableexcept
+
+   function fpe_disableexcept (exc) result (res) bind(c, &
+      name="fpe_disable_traps")
+   import
+   integer(c_int), value :: exc
+   integer(c_int) :: res
+   end function fpe_disableexcept
+
+   function fpe_getexcept () result (res) bind(c, &
+      name="fpe_get_traps")
+   import
+   integer(c_int) :: res
+   end function fpe_getexcept
+
+   function handler_supported () result (res) bind(c, &
+      name="fpe_supports_handler")
+   import
+   integer(c_int) :: res
+   end function handler_supported
+
+   function install_fpe_handler () result (res) bind(c, &
+      name="fpe_handler_install")
+   import
+   integer(c_int) :: res
+   end function install_fpe_handler
+
+   function uninstall_fpe_handler () result (res) bind(c, &
+      name="fpe_handler_uninstall")
+   import
+   integer(c_int) :: res
+   end function uninstall_fpe_handler
+
+   subroutine fpe_handler_arm () bind(c)
+   end subroutine fpe_handler_arm
+
+end interface
+
+contains
+
+function create_mask (exc) result (mask)
+integer, dimension(:), optional, intent(in) :: exc
+integer :: mask, i
+   if (present (exc)) then
+      mask = 0
+      do i = 1, size (exc)
+         mask = ior (mask, exc(i))
+      end do
+   else
+      mask = FPE_ALL
+   end if
+end function create_mask
+
+subroutine fpe_clear_exceptions (exc)
+integer, dimension(:), optional, intent(in) :: exc
+integer :: foo
+   foo = feclearexcept (create_mask (exc))
+end subroutine fpe_clear_exceptions
+
+subroutine fpe_raise_exceptions (exc)
+integer, dimension(:), optional, intent(in) :: exc
+integer :: foo
+   foo = feraiseexcept (create_mask (exc))
+end subroutine fpe_raise_exceptions
+
+function fpe_get_exceptions (exc) result (raised)
+integer, dimension(:), optional, intent(in) :: exc
+integer :: raised
+   raised = fetestexcept (create_mask (exc))
+end function fpe_get_exceptions
+
+function fpe_check_exceptions (exc) result (flag)
+integer, dimension(:), optional, intent(in) :: exc
+logical :: flag
+   flag = fpe_get_exceptions (exc) /= 0
+end function fpe_check_exceptions
+
+function fpe_traps_supported () result (stat)
+logical :: stat
+   stat = traps_supported () /= 0
+end function fpe_traps_supported
+
+subroutine fpe_enable_traps (exc)
+integer, dimension(:), optional, intent(in) :: exc
+integer :: foo
+   foo = fpe_enableexcept (create_mask (exc))
+end subroutine fpe_enable_traps
+
+subroutine fpe_disable_traps (exc)
+integer, dimension(:), optional, intent(in) :: exc
+integer :: foo
+   foo = fpe_disableexcept (create_mask (exc))
+end subroutine fpe_disable_traps
+
+function fpe_get_trap_mask () result (mask)
+integer :: mask
+   mask = fpe_getexcept ()
+end function fpe_get_trap_mask
+
+function fpe_handler_supported () result (stat)
+logical :: stat
+   stat = handler_supported () /= 0
+end function fpe_handler_supported
+
+subroutine fpe_handler_install (stat)
+logical, intent(out), optional :: stat
+integer :: res
+   res = install_fpe_handler ()
+   if (present (stat)) stat = res /= 0
+end subroutine fpe_handler_install
+
+subroutine fpe_handler_uninstall (stat)
+logical, intent(out), optional :: stat
+integer :: res
+   res = uninstall_fpe_handler ()
+   if (present (stat)) stat = res /= 0
+end subroutine fpe_handler_uninstall
+
+end module nannihilator

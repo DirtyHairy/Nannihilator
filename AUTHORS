@@ -1,0 +1,4 @@
+Christian Speckner <cnspeckn@googlemail.com> (2012 -)
+
+The backtrace code was taken from the cairo project, the FORTRAN compiler
+checks derive from the WHIZARD project.

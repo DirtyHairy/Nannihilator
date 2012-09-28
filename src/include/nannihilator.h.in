@@ -1,0 +1,50 @@
+/***********************************************************************
+*
+* This file is part of Nannihilator.
+*
+* Copyright (C) 2012- by 
+*     Christian Speckner <cnspeckn@googlemail.com>
+*
+* Nannihilator is free software; you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by 
+* the Free Software Foundation; either version 3, or (at your option)
+* any later version.
+*
+* Nannihilator is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+************************************************************************/
+
+#ifndef NANNIHILATOR_H
+#define NANNIHILATOR_H
+
+#include "fpe_handler.h"
+
+// Build time configuration
+#@FPE_WITH_TRAP_CONTROL@ FPE_WITH_TRAP_CONTROL
+
+#@FPE_WITH_TRAP_HANDLER@ FPE_WITH_TRAP_HANDLER
+
+#@FPE_WITH_FANCY_TRACES@ FPE_WITH_FANCY_TRACES
+
+// Runtime query for trap support
+int fpe_supports_traps ();
+
+// Wrappers for disabling / enabling traps. Those take care of notifying the
+// trap handler of any changes.
+int fpe_enable_traps (const int);
+
+int fpe_disable_traps (const int);
+
+int fpe_get_traps ();
+
+// Runtime query for support of our custom trap handler.
+int fpe_supports_handler ();
+
+#endif
